@@ -1,1 +1,11 @@
 developer_key
+
+# Build artifacts
+bin/
+gen/
+internal-mir/
+mir/
+*.prg
+*.prg.debug.xml
+*-settings.json
+*.iq
