@@ -9,4 +9,7 @@
             <listEntry value="5">@Strings.OptCalories</listEntry>
         </settingConfig>
     </setting>
+    <setting propertyKey="@Properties.ShowBodyBattery" title="@Strings.ShowBodyBatteryTitle">
+        <settingConfig type="boolean" />
+    </setting>
 </settings>

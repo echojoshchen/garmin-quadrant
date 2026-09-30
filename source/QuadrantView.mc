@@ -108,7 +108,10 @@ class QuadrantView extends WatchUi.WatchFace {
             return;
         }
 
-        drawRing(dc, cx, cy, w);
+        var showBB = showBodyBattery();
+        if (showBB) {
+            drawRing(dc, cx, cy, w);
+        }
         drawTopRow(dc, cx, (h * 0.155).toNumber(), w, ds);
         drawGrid(dc, w, h, cx);
 
@@ -135,7 +138,7 @@ class QuadrantView extends WatchUi.WatchFace {
         drawRightCell(dc, rightX, rowBot, wx[1], wx[0]);
 
         drawTime(dc, cx, cy, C_WHITE);
-        drawBottom(dc, cx, h);
+        drawBottom(dc, cx, h, showBB);
     }
 
     // ---------- Drawing ----------
@@ -219,9 +222,26 @@ class QuadrantView extends WatchUi.WatchFace {
         }
     }
 
-    function drawBottom(dc, cx, h) {
-        // Body Battery number, blue, with a bolt icon
+    function drawBottom(dc, cx, h, showBB) {
         var y1 = (h * 0.81).toNumber();
+        var battY = (h * 0.885).toNumber();
+
+        // When Body Battery is turned off, the watch battery moves up into its place
+        if (showBB) {
+            drawBodyBatteryNumber(dc, cx, y1);
+        } else {
+            battY = y1;
+        }
+
+        // Watch battery, small and gray (turns red below 15%)
+        var batt = System.getSystemStats().battery.toNumber();
+        dc.setColor(batt < 15 ? C_RED : C_GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, battY, Graphics.FONT_XTINY, batt.toString() + "%",
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+    }
+
+    // Body Battery number, blue, with a bolt icon
+    function drawBodyBatteryNumber(dc, cx, y1) {
         var bbTxt = _bodyBattery == null ? "--" : _bodyBattery.toString();
         var font = Graphics.FONT_TINY;
         var bolt = _icons[:bolt];
@@ -230,12 +250,6 @@ class QuadrantView extends WatchUi.WatchFace {
         dc.drawBitmap(sx, y1 - bolt.getHeight() / 2, bolt);
         dc.setColor(C_BLUE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(sx + bolt.getWidth() + 4, y1, font, bbTxt, Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
-
-        // Watch battery, small and gray (turns red below 15%)
-        var batt = System.getSystemStats().battery.toNumber();
-        dc.setColor(batt < 15 ? C_RED : C_GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.885).toNumber(), Graphics.FONT_XTINY, batt.toString() + "%",
-            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
     // Number right-aligned to x, icon to its left
@@ -261,6 +275,16 @@ class QuadrantView extends WatchUi.WatchFace {
     }
 
     // ---------- Data ----------
+
+    // Defaults to on if the setting can't be read
+    function showBodyBattery() {
+        try {
+            var v = Application.Properties.getValue("ShowBodyBattery");
+            if (v != null) { return v; }
+        } catch (e) {
+        }
+        return true;
+    }
 
     // Returns [text, icon] for the top-right slot based on the setting.
     // 0 Recovery, 1 Stress, 2 Intensity minutes, 3 Sunrise/sunset, 4 Floors, 5 Calories

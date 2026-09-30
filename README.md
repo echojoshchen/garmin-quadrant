@@ -47,6 +47,9 @@ the number in `TopRightField`:
 | 4 | Floors climbed |
 | 5 | Calories |
 
+To hide the Body Battery ring and number, set `ShowBodyBattery` to `false` in
+the same file. The watch battery moves up into the empty spot.
+
 Then rebuild and copy the new `.prg` over the old one. If you publish it to
 the Connect IQ Store later, this becomes a normal setting in the Connect app.
 
