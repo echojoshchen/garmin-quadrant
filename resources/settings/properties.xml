@@ -1,0 +1,4 @@
+<properties>
+    <!-- 0 Recovery, 1 Stress, 2 Intensity, 3 Sunrise/sunset, 4 Floors, 5 Calories -->
+    <property id="TopRightField" type="number">0</property>
+</properties>

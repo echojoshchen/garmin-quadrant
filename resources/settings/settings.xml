@@ -1,0 +1,12 @@
+<settings>
+    <setting propertyKey="@Properties.TopRightField" title="@Strings.TopRightTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.OptRecovery</listEntry>
+            <listEntry value="1">@Strings.OptStress</listEntry>
+            <listEntry value="2">@Strings.OptIntensity</listEntry>
+            <listEntry value="3">@Strings.OptSun</listEntry>
+            <listEntry value="4">@Strings.OptFloors</listEntry>
+            <listEntry value="5">@Strings.OptCalories</listEntry>
+        </settingConfig>
+    </setting>
+</settings>

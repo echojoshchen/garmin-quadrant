@@ -1,0 +1,10 @@
+<strings>
+    <string id="AppName">Quadrant</string>
+    <string id="TopRightTitle">Top-right field</string>
+    <string id="OptRecovery">Recovery time</string>
+    <string id="OptStress">Stress</string>
+    <string id="OptIntensity">Intensity minutes (week)</string>
+    <string id="OptSun">Next sunrise or sunset</string>
+    <string id="OptFloors">Floors climbed</string>
+    <string id="OptCalories">Calories</string>
+</strings>

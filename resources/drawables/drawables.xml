@@ -1,0 +1,21 @@
+<drawables>
+    <bitmap id="LauncherIcon" filename="launcher_icon.png"/>
+    <bitmap id="IconBolt" filename="icons/bolt.png"/>
+    <bitmap id="IconBtOff" filename="icons/bt_off.png"/>
+    <bitmap id="IconBtOn" filename="icons/bt_on.png"/>
+    <bitmap id="IconCloud" filename="icons/cloud.png"/>
+    <bitmap id="IconFlame" filename="icons/flame.png"/>
+    <bitmap id="IconFloors" filename="icons/floors.png"/>
+    <bitmap id="IconHeart" filename="icons/heart.png"/>
+    <bitmap id="IconIntensity" filename="icons/intensity.png"/>
+    <bitmap id="IconMessage" filename="icons/message.png"/>
+    <bitmap id="IconRain" filename="icons/rain.png"/>
+    <bitmap id="IconRecovery" filename="icons/recovery.png"/>
+    <bitmap id="IconSnow" filename="icons/snow.png"/>
+    <bitmap id="IconStorm" filename="icons/storm.png"/>
+    <bitmap id="IconStress" filename="icons/stress.png"/>
+    <bitmap id="IconSun" filename="icons/sun.png"/>
+    <bitmap id="IconSunrise" filename="icons/sunrise.png"/>
+    <bitmap id="IconSunset" filename="icons/sunset.png"/>
+    <bitmap id="IconWalk" filename="icons/walk.png"/>
+</drawables>
