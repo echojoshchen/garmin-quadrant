@@ -5,9 +5,7 @@
             <iq:product id="fr265"/>
             <iq:product id="fr265s"/>
         </iq:products>
-        <iq:permissions>
-            <iq:uses-permission id="SensorHistory"/>
-        </iq:permissions>
+        <iq:permissions/>
         <iq:languages>
             <iq:language>eng</iq:language>
         </iq:languages>

@@ -3,7 +3,6 @@ import Toybox.ActivityMonitor;
 import Toybox.Application;
 import Toybox.Graphics;
 import Toybox.Lang;
-import Toybox.SensorHistory;
 import Toybox.System;
 import Toybox.Time;
 import Toybox.Time.Gregorian;
@@ -20,9 +19,7 @@ class QuadrantView extends WatchUi.WatchFace {
     const C_GRAY  = 0x8A8A8A;
     const C_DIM   = 0x5A5A5A;   // always-on time
     const C_LINE  = 0x333333;   // hairline dividers
-    const C_TRACK = 0x1C1C1C;   // empty part of the ring
-    const C_BLUE  = 0x85B7EB;   // Body Battery + Bluetooth
-    const C_RED   = 0xE24B4A;   // heart + unread dot
+    const C_RED   = 0xE24B4A;   // heart, unread dot, low battery
 
     const GAP = 8;              // space between an icon and its number
 
@@ -30,7 +27,6 @@ class QuadrantView extends WatchUi.WatchFace {
     var _timeFont = null;
     var _timeIsVector = false;
     var _sleeping = false;
-    var _bodyBattery = null;
 
     function initialize() {
         WatchFace.initialize();
@@ -39,8 +35,6 @@ class QuadrantView extends WatchUi.WatchFace {
     function onLayout(dc) {
         _icons = {
             :heart     => WatchUi.loadResource(Rez.Drawables.IconHeart),
-            :walk      => WatchUi.loadResource(Rez.Drawables.IconWalk),
-            :flame     => WatchUi.loadResource(Rez.Drawables.IconFlame),
             :sun       => WatchUi.loadResource(Rez.Drawables.IconSun),
             :cloud     => WatchUi.loadResource(Rez.Drawables.IconCloud),
             :rain      => WatchUi.loadResource(Rez.Drawables.IconRain),
@@ -48,14 +42,7 @@ class QuadrantView extends WatchUi.WatchFace {
             :storm     => WatchUi.loadResource(Rez.Drawables.IconStorm),
             :btOn      => WatchUi.loadResource(Rez.Drawables.IconBtOn),
             :btOff     => WatchUi.loadResource(Rez.Drawables.IconBtOff),
-            :message   => WatchUi.loadResource(Rez.Drawables.IconMessage),
-            :bolt      => WatchUi.loadResource(Rez.Drawables.IconBolt),
-            :recovery  => WatchUi.loadResource(Rez.Drawables.IconRecovery),
-            :stress    => WatchUi.loadResource(Rez.Drawables.IconStress),
-            :intensity => WatchUi.loadResource(Rez.Drawables.IconIntensity),
-            :sunrise   => WatchUi.loadResource(Rez.Drawables.IconSunrise),
-            :sunset    => WatchUi.loadResource(Rez.Drawables.IconSunset),
-            :floors    => WatchUi.loadResource(Rez.Drawables.IconFloors)
+            :message   => WatchUi.loadResource(Rez.Drawables.IconMessage)
         };
 
         // A thin system vector font gives the refined look. If the watch
@@ -108,64 +95,26 @@ class QuadrantView extends WatchUi.WatchFace {
             return;
         }
 
-        var showBB = showBodyBattery();
-        if (showBB) {
-            drawRing(dc, cx, cy, w);
-        }
         drawTopRow(dc, cx, (h * 0.155).toNumber(), w, ds);
         drawGrid(dc, w, h, cx);
 
-        var info = ActivityMonitor.getInfo();
-        var rowTop = (h * 0.285).toNumber();
         var rowBot = (h * 0.715).toNumber();
         var leftX  = (w * 0.46).toNumber();
         var rightX = (w * 0.54).toNumber();
 
-        // Top-left: heart rate
+        // Bottom-left: heart rate
         var hr = getHeartRate();
-        drawLeftCell(dc, leftX, rowTop, _icons[:heart], hr == null ? "--" : hr.toString());
-
-        // Top-right: user-selectable field
-        var tr = getTopRightField(info);
-        drawRightCell(dc, rightX, rowTop, tr[1], tr[0]);
-
-        // Bottom-left: steps
-        var steps = info.steps;
-        drawLeftCell(dc, leftX, rowBot, _icons[:walk], steps == null ? "--" : formatThousands(steps));
+        drawLeftCell(dc, leftX, rowBot, _icons[:heart], hr == null ? "--" : hr.toString());
 
         // Bottom-right: weather
         var wx = getWeather(ds);
         drawRightCell(dc, rightX, rowBot, wx[1], wx[0]);
 
         drawTime(dc, cx, cy, C_WHITE);
-        drawBottom(dc, cx, h, showBB);
+        drawBattery(dc, cx, h);
     }
 
     // ---------- Drawing ----------
-
-    function drawRing(dc, cx, cy, w) {
-        var pen = (w * 0.016).toNumber();
-        if (pen < 4) { pen = 4; }
-        var r = cx - pen / 2 - 3;
-
-        dc.setPenWidth(pen);
-        dc.setColor(C_TRACK, Graphics.COLOR_TRANSPARENT);
-        dc.drawCircle(cx, cy, r);
-
-        _bodyBattery = latestSample(:bodyBattery);
-        if (_bodyBattery != null && _bodyBattery > 0) {
-            dc.setColor(C_BLUE, Graphics.COLOR_TRANSPARENT);
-            if (_bodyBattery >= 100) {
-                dc.drawCircle(cx, cy, r);
-            } else {
-                // Starts at 12 o'clock and fills clockwise
-                var endDeg = 90 - (_bodyBattery * 360 / 100);
-                if (endDeg < 0) { endDeg += 360; }
-                dc.drawArc(cx, cy, r, Graphics.ARC_CLOCKWISE, 90, endDeg);
-            }
-        }
-        dc.setPenWidth(1);
-    }
 
     function drawTopRow(dc, cx, y, w, ds) {
         var d = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
@@ -205,7 +154,6 @@ class QuadrantView extends WatchUi.WatchFace {
         dc.setPenWidth(2);
         dc.drawLine(x1, y1, x2, y1);
         dc.drawLine(x1, y2, x2, y2);
-        dc.drawLine(cx, (h * 0.23).toNumber(), cx, y1);
         dc.drawLine(cx, y2, cx, (h * 0.77).toNumber());
         dc.setPenWidth(1);
     }
@@ -222,34 +170,12 @@ class QuadrantView extends WatchUi.WatchFace {
         }
     }
 
-    function drawBottom(dc, cx, h, showBB) {
-        var y1 = (h * 0.81).toNumber();
-        var battY = (h * 0.885).toNumber();
-
-        // When Body Battery is turned off, the watch battery moves up into its place
-        if (showBB) {
-            drawBodyBatteryNumber(dc, cx, y1);
-        } else {
-            battY = y1;
-        }
-
-        // Watch battery, small and gray (turns red below 15%)
+    // Watch battery, small and gray (turns red below 25%)
+    function drawBattery(dc, cx, h) {
         var batt = System.getSystemStats().battery.toNumber();
-        dc.setColor(batt < 15 ? C_RED : C_GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, battY, Graphics.FONT_XTINY, batt.toString() + "%",
+        dc.setColor(batt < 25 ? C_RED : C_GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, (h * 0.81).toNumber(), Graphics.FONT_XTINY, batt.toString() + "%",
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-    }
-
-    // Body Battery number, blue, with a bolt icon
-    function drawBodyBatteryNumber(dc, cx, y1) {
-        var bbTxt = _bodyBattery == null ? "--" : _bodyBattery.toString();
-        var font = Graphics.FONT_TINY;
-        var bolt = _icons[:bolt];
-        var tw = dc.getTextWidthInPixels(bbTxt, font);
-        var sx = cx - (bolt.getWidth() + 4 + tw) / 2;
-        dc.drawBitmap(sx, y1 - bolt.getHeight() / 2, bolt);
-        dc.setColor(C_BLUE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(sx + bolt.getWidth() + 4, y1, font, bbTxt, Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
     // Number right-aligned to x, icon to its left
@@ -276,49 +202,6 @@ class QuadrantView extends WatchUi.WatchFace {
 
     // ---------- Data ----------
 
-    // Defaults to on if the setting can't be read
-    function showBodyBattery() {
-        try {
-            var v = Application.Properties.getValue("ShowBodyBattery");
-            if (v != null) { return v; }
-        } catch (e) {
-        }
-        return true;
-    }
-
-    // Returns [text, icon] for the top-right slot based on the setting.
-    // 0 Recovery, 1 Stress, 2 Intensity minutes, 3 Sunrise/sunset, 4 Floors, 5 Calories
-    function getTopRightField(info) {
-        var choice = 0;
-        try {
-            var v = Application.Properties.getValue("TopRightField");
-            if (v != null) { choice = v; }
-        } catch (e) {
-        }
-
-        if (choice == 1) {
-            var s = latestSample(:stress);
-            return [s == null ? "--" : s.toString(), _icons[:stress]];
-        } else if (choice == 2) {
-            var t = null;
-            if ((info has :activeMinutesWeek) && info.activeMinutesWeek != null) {
-                t = info.activeMinutesWeek.total;
-            }
-            return [t == null ? "--" : t.toString(), _icons[:intensity]];
-        } else if (choice == 3) {
-            return getNextSun();
-        } else if (choice == 4) {
-            var f = (info has :floorsClimbed) ? info.floorsClimbed : null;
-            return [f == null ? "--" : f.toString(), _icons[:floors]];
-        } else if (choice == 5) {
-            var c = info.calories;
-            return [c == null ? "--" : formatThousands(c), _icons[:flame]];
-        }
-
-        var r = (info has :timeToRecovery) ? info.timeToRecovery : null;
-        return [r == null ? "--" : r.toString() + "h", _icons[:recovery]];
-    }
-
     function getHeartRate() {
         var ai = Activity.getActivityInfo();
         if (ai != null && ai.currentHeartRate != null) {
@@ -332,22 +215,6 @@ class QuadrantView extends WatchUi.WatchFace {
             }
         }
         return null;
-    }
-
-    // Latest Body Battery or stress value (0-100), or null
-    function latestSample(kind) {
-        if (!(Toybox has :SensorHistory)) { return null; }
-        var opts = { :period => 1, :order => SensorHistory.ORDER_NEWEST_FIRST };
-        var it = null;
-        if (kind == :bodyBattery && (SensorHistory has :getBodyBatteryHistory)) {
-            it = SensorHistory.getBodyBatteryHistory(opts);
-        } else if (kind == :stress && (SensorHistory has :getStressHistory)) {
-            it = SensorHistory.getStressHistory(opts);
-        }
-        if (it == null) { return null; }
-        var s = it.next();
-        if (s == null || s.data == null) { return null; }
-        return s.data.toNumber();
     }
 
     // Returns [text, icon]
@@ -382,35 +249,7 @@ class QuadrantView extends WatchUi.WatchFace {
         return _icons[:cloud];
     }
 
-    // Returns [text, icon] for whichever of sunrise/sunset comes next
-    function getNextSun() {
-        var none = ["--", _icons[:sunrise]];
-        if (!(Weather has :getSunrise)) { return none; }
-        var cc = Weather.getCurrentConditions();
-        if (cc == null || cc.observationLocationPosition == null) { return none; }
-
-        var loc = cc.observationLocationPosition;
-        var now = Time.now();
-        var rise = Weather.getSunrise(loc, now);
-        var sunset = Weather.getSunset(loc, now);
-
-        if (rise != null && now.lessThan(rise)) {
-            return [formatMoment(rise), _icons[:sunrise]];
-        }
-        if (sunset != null && now.lessThan(sunset)) {
-            return [formatMoment(sunset), _icons[:sunset]];
-        }
-        var tomorrow = Weather.getSunrise(loc, now.add(new Time.Duration(86400)));
-        if (tomorrow == null) { return none; }
-        return [formatMoment(tomorrow), _icons[:sunrise]];
-    }
-
     // ---------- Formatting ----------
-
-    function formatMoment(m) {
-        var i = Gregorian.info(m, Time.FORMAT_SHORT);
-        return formatHourMin(i.hour, i.min);
-    }
 
     // Respects the watch's 12/24-hour setting
     function formatHourMin(hour, min) {
@@ -422,8 +261,4 @@ class QuadrantView extends WatchUi.WatchFace {
         return hour.format("%02d") + ":" + min.format("%02d");
     }
 
-    function formatThousands(n) {
-        if (n < 1000) { return n.toString(); }
-        return (n / 1000).toString() + "," + (n % 1000).format("%03d");
-    }
 }

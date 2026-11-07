@@ -1,18 +1,15 @@
 # Quadrant watch face (Forerunner 265 / 265S)
 
-A four-stat grid with a thin time, a Body Battery ring around the edge, and
+A clean face with a thin time, heart rate and weather below it, and
 Bluetooth and message indicators beside the date.
 
 ## What it shows
 
 - **Top row:** Bluetooth (blue when connected, dim when not), the date, and a
   message icon with a red dot when you have unread notifications
-- **Top-left:** heart rate
-- **Top-right:** your choice (see below), recovery time by default
-- **Bottom-left:** steps
+- **Bottom-left:** heart rate
 - **Bottom-right:** temperature, with an icon that changes with the weather
-- **Ring and blue number:** Body Battery
-- **Small gray number:** watch battery (turns red under 15%)
+- **Small gray number:** watch battery (turns red under 25%)
 
 In always-on mode it shows only a dim time that shifts a few pixels each
 minute, which protects the AMOLED screen and saves battery.
@@ -32,28 +29,7 @@ minute, which protects the AMOLED screen and saves battery.
    On a Mac you'll need an MTP app such as OpenMTP to see the watch's files.
 8. Unplug, then long-press UP on the watch > Watch Face and select **Quadrant**.
 
-## Changing the top-right field
-
-Sideloaded watch faces don't get a settings screen in Garmin Connect, so set
-the default before building. In `resources/settings/properties.xml`, change
-the number in `TopRightField`:
-
-| Value | Field |
-|---|---|
-| 0 | Recovery time (default) |
-| 1 | Stress |
-| 2 | Intensity minutes this week |
-| 3 | Next sunrise or sunset |
-| 4 | Floors climbed |
-| 5 | Calories |
-
-To hide the Body Battery ring and number, set `ShowBodyBattery` to `false` in
-the same file. The watch battery moves up into the empty spot.
-
-Then rebuild and copy the new `.prg` over the old one. If you publish it to
-the Connect IQ Store later, this becomes a normal setting in the Connect app.
-
 ## Tweaking the look
 
-Colors are at the top of `source/QuadrantView.mc` (`C_BLUE`, `C_RED`, etc.).
+Colors are at the top of `source/QuadrantView.mc` (`C_WHITE`, `C_RED`, etc.).
 Layout positions are fractions of the screen size in `onUpdate`.
